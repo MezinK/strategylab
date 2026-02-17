@@ -2,6 +2,8 @@ plugins {
     java
     id("org.springframework.boot") version "4.0.2"
     id("io.spring.dependency-management") version "1.1.7"
+    id("name.remal.sonarlint") version "7.0.1"
+    pmd
 }
 
 group = "com.github.mezink"
