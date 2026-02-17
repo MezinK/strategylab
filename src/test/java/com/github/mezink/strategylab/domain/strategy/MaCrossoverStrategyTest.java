@@ -11,29 +11,29 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class MaCrossoverStrategyTest {
 
-    private static final String SHORT_WINDOW = "shortWindow";
-    private static final String LONG_WINDOW = "longWindow";
-    private final MaCrossoverStrategy strategy = new MaCrossoverStrategy();
-
     @Test
     void idAndMetadata() {
-        assertEquals("ma_crossover", strategy.id());
-        assertFalse(strategy.parameterDescriptors().isEmpty());
+        MaCrossoverStrategy strategy = new MaCrossoverStrategy(new MaCrossoverConfig(5, 20));
+        assertEquals(StrategyId.MA_CROSSOVER, strategy.id());
+        assertFalse(StrategyId.MA_CROSSOVER.parameterDescriptors().isEmpty());
+    }
+
+    @Test
+    void configIsAccessible() {
+        MaCrossoverConfig config = new MaCrossoverConfig(5, 20);
+        MaCrossoverStrategy strategy = new MaCrossoverStrategy(config);
+        assertSame(config, strategy.config());
     }
 
     @Test
     void throwsIfShortWindowNotLessThanLong() {
-        TimeSeries series = createTrendingSeries(100, 50.0, 0.5);
-        BigDecimal capital = bd(10000);
-        Map<String, String> params = Map.of(SHORT_WINDOW, "20", LONG_WINDOW, "20");
         assertThrows(IllegalArgumentException.class, () ->
-                strategy.execute(series, capital, params));
+                new MaCrossoverConfig(20, 20));
     }
 
     @Test
@@ -49,10 +49,8 @@ class MaCrossoverStrategyTest {
         for (int i = 0; i < 30; i++) prices.add(20.0 + i * 2);
 
         TimeSeries series = createSeriesFromPrices(prices);
-        StrategyExecution result = strategy.execute(series, bd(10000), Map.of(
-                SHORT_WINDOW, "5",
-                LONG_WINDOW, "15"
-        ));
+        MaCrossoverStrategy strategy = new MaCrossoverStrategy(new MaCrossoverConfig(5, 15));
+        StrategyExecution result = strategy.execute(series, bd(10000));
 
         assertFalse(result.trades().isEmpty(), "Should have trades when SMA crossovers occur");
 
@@ -66,10 +64,8 @@ class MaCrossoverStrategyTest {
     @Test
     void equityCurveHasSameSizeAsCandles() {
         TimeSeries series = createTrendingSeries(60, 100.0, 0.1);
-        StrategyExecution result = strategy.execute(series, bd(10000), Map.of(
-                SHORT_WINDOW, "5",
-                LONG_WINDOW, "20"
-        ));
+        MaCrossoverStrategy strategy = new MaCrossoverStrategy(new MaCrossoverConfig(5, 20));
+        StrategyExecution result = strategy.execute(series, bd(10000));
 
         assertEquals(series.candles().size(), result.equityCurve().size());
     }
@@ -82,10 +78,8 @@ class MaCrossoverStrategyTest {
         for (int i = 0; i < 30; i++) prices.add(20.0 + i * 2);
 
         TimeSeries series = createSeriesFromPrices(prices);
-        StrategyExecution result = strategy.execute(series, bd(10000), Map.of(
-                SHORT_WINDOW, "5",
-                LONG_WINDOW, "15"
-        ));
+        MaCrossoverStrategy strategy = new MaCrossoverStrategy(new MaCrossoverConfig(5, 15));
+        StrategyExecution result = strategy.execute(series, bd(10000));
 
         for (Trade trade : result.trades()) {
             assertNotNull(trade.reason());

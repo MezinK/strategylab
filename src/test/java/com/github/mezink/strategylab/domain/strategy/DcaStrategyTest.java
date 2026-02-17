@@ -12,27 +12,30 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DcaStrategyTest {
 
-    private final DcaStrategy strategy = new DcaStrategy();
-
     @Test
     void idAndMetadata() {
-        assertEquals("dca", strategy.id());
-        assertFalse(strategy.parameterDescriptors().isEmpty());
+        DcaStrategy strategy = new DcaStrategy(new DcaConfig(bd(500), 5));
+        assertEquals(StrategyId.DCA, strategy.id());
+        assertFalse(StrategyId.DCA.parameterDescriptors().isEmpty());
+    }
+
+    @Test
+    void configIsAccessible() {
+        DcaConfig config = new DcaConfig(bd(500), 5);
+        DcaStrategy strategy = new DcaStrategy(config);
+        assertSame(config, strategy.config());
     }
 
     @Test
     void investsInitialCapitalOnFirstDay() {
         TimeSeries series = createSeries(10);
-        StrategyExecution result = strategy.execute(series, bd(1000), Map.of(
-                "contributionAmount", "500",
-                "frequencyDays", "5"
-        ));
+        DcaStrategy strategy = new DcaStrategy(new DcaConfig(bd(500), 5));
+        StrategyExecution result = strategy.execute(series, bd(1000));
 
         // First trade should be the initial investment
         assertFalse(result.trades().isEmpty());
@@ -45,10 +48,8 @@ class DcaStrategyTest {
     void makesDcaContributionsAtFrequency() {
         // 11 days, frequency=5 -> initial buy + 2 DCA contributions (day 5 and day 10)
         TimeSeries series = createSeries(11);
-        StrategyExecution result = strategy.execute(series, bd(1000), Map.of(
-                "contributionAmount", "500",
-                "frequencyDays", "5"
-        ));
+        DcaStrategy strategy = new DcaStrategy(new DcaConfig(bd(500), 5));
+        StrategyExecution result = strategy.execute(series, bd(1000));
 
         assertEquals(3, result.trades().size(), "Should have initial + 2 DCA buys");
         // All should be BUY
@@ -58,10 +59,8 @@ class DcaStrategyTest {
     @Test
     void equityCurveGrowsWithContributions() {
         TimeSeries series = createConstantPriceSeries(10, 100.0);
-        StrategyExecution result = strategy.execute(series, bd(1000), Map.of(
-                "contributionAmount", "500",
-                "frequencyDays", "5"
-        ));
+        DcaStrategy strategy = new DcaStrategy(new DcaConfig(bd(500), 5));
+        StrategyExecution result = strategy.execute(series, bd(1000));
 
         List<EquityPoint> curve = result.equityCurve();
         // With constant price, equity should grow at each contribution
@@ -73,16 +72,9 @@ class DcaStrategyTest {
 
     @Test
     void totalContributionsCalculation() {
-        BigDecimal initial = bd(1000);
-        BigDecimal contribution = bd(500);
-        List<Trade> trades = List.of(
-                new Trade(LocalDate.now(), TradeAction.BUY, bd(10), bd(100), "Initial"),
-                new Trade(LocalDate.now(), TradeAction.BUY, bd(5), bd(100), "DCA"),
-                new Trade(LocalDate.now(), TradeAction.BUY, bd(5), bd(100), "DCA")
-        );
-
-        BigDecimal total = DcaStrategy.computeTotalContributions(initial, trades, contribution);
-        // 1000 + 2 * 500 = 2000
+        DcaConfig config = new DcaConfig(bd(500), 5);
+        BigDecimal total = config.totalContributions(bd(1000), 3);
+        // 1000 + 2 * 500 = 2000 (tradeCount=3: 1 initial + 2 DCA)
         assertEquals(0, bd(2000).compareTo(total));
     }
 

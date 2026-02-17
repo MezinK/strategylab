@@ -12,25 +12,30 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class BuyAndHoldStrategyTest {
 
-    private final BuyAndHoldStrategy strategy = new BuyAndHoldStrategy();
+    private final BuyAndHoldStrategy strategy = new BuyAndHoldStrategy(new BuyAndHoldConfig());
 
     @Test
     void idAndMetadata() {
-        assertEquals("buy_and_hold", strategy.id());
-        assertNotNull(strategy.displayName());
-        assertNotNull(strategy.description());
+        assertEquals(StrategyId.BUY_AND_HOLD, strategy.id());
+        assertNotNull(StrategyId.BUY_AND_HOLD.displayName());
+        assertNotNull(StrategyId.BUY_AND_HOLD.description());
+    }
+
+    @Test
+    void configIsAccessible() {
+        assertNotNull(strategy.config());
+        assertInstanceOf(BuyAndHoldConfig.class, strategy.config());
     }
 
     @Test
     void investsAllCapitalAtStart() {
         TimeSeries series = createSimpleSeries(List.of(100.0, 110.0, 120.0));
-        StrategyExecution result = strategy.execute(series, bd(10000), Map.of());
+        StrategyExecution result = strategy.execute(series, bd(10000));
 
         assertEquals(1, result.trades().size());
         Trade trade = result.trades().getFirst();
@@ -42,7 +47,7 @@ class BuyAndHoldStrategyTest {
     @Test
     void equityCurveReflectsHolding() {
         TimeSeries series = createSimpleSeries(List.of(100.0, 200.0, 50.0));
-        StrategyExecution result = strategy.execute(series, bd(10000), Map.of());
+        StrategyExecution result = strategy.execute(series, bd(10000));
 
         List<EquityPoint> curve = result.equityCurve();
         assertEquals(3, curve.size());

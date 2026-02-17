@@ -12,7 +12,6 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Moving Average Crossover strategy.
@@ -25,47 +24,26 @@ public class MaCrossoverStrategy implements Strategy {
 
     private static final MathContext MC = new MathContext(16, RoundingMode.HALF_UP);
 
-    @Override
-    public String id() {
-        return "ma_crossover";
+    private final MaCrossoverConfig strategyConfig;
+
+    public MaCrossoverStrategy(MaCrossoverConfig strategyConfig) {
+        this.strategyConfig = strategyConfig;
     }
 
     @Override
-    public String displayName() {
-        return "Moving Average Crossover";
+    public StrategyId id() {
+        return StrategyId.MA_CROSSOVER;
     }
 
     @Override
-    public String description() {
-        return "Fully invested when short SMA > long SMA; fully in cash otherwise. Trades only on signal changes.";
+    public StrategyConfig config() {
+        return strategyConfig;
     }
 
     @Override
-    public List<StrategyParameterDescriptor> parameterDescriptors() {
-        return List.of(
-                new StrategyParameterDescriptor(
-                        "shortWindow",
-                        "Short SMA window (trading days)",
-                        "integer",
-                        "20"
-                ),
-                new StrategyParameterDescriptor(
-                        "longWindow",
-                        "Long SMA window (trading days)",
-                        "integer",
-                        "50"
-                )
-        );
-    }
-
-    @Override
-    public StrategyExecution execute(TimeSeries series, BigDecimal initialCapital, Map<String, String> params) {
-        int shortWindow = Integer.parseInt(params.getOrDefault("shortWindow", "20"));
-        int longWindow = Integer.parseInt(params.getOrDefault("longWindow", "50"));
-
-        if (shortWindow >= longWindow) {
-            throw new IllegalArgumentException("shortWindow must be less than longWindow");
-        }
+    public StrategyExecution execute(TimeSeries series, BigDecimal initialCapital) {
+        int shortWindow = strategyConfig.shortWindow();
+        int longWindow = strategyConfig.longWindow();
 
         List<Candle> candles = series.candles();
         List<BigDecimal> closePrices = candles.stream().map(Candle::close).toList();
@@ -85,19 +63,16 @@ public class MaCrossoverStrategy implements Strategy {
             BigDecimal shortVal = shortSma.get(i);
             BigDecimal longVal = longSma.get(i);
 
-            // Only trade once we have both SMAs
             if (shortVal != null && longVal != null) {
                 boolean shouldBeInvested = shortVal.compareTo(longVal) > 0;
 
                 if (shouldBeInvested && !invested) {
-                    // Buy signal
                     shares = cash.divide(candle.close(), MC);
                     trades.add(new Trade(candle.date(), TradeAction.BUY, shares, candle.close(),
                             "SMA(%d) crossed above SMA(%d)".formatted(shortWindow, longWindow)));
                     cash = BigDecimal.ZERO;
                     invested = true;
                 } else if (!shouldBeInvested && invested) {
-                    // Sell signal
                     cash = shares.multiply(candle.close());
                     trades.add(new Trade(candle.date(), TradeAction.SELL, shares, candle.close(),
                             "SMA(%d) crossed below SMA(%d)".formatted(shortWindow, longWindow)));

@@ -9,4 +9,9 @@ public record StrategyParameterDescriptor(
         String type,
         String defaultValue
 ) {
+    /** Parameter type for whole numbers. */
+    public static final String TYPE_INTEGER = "integer";
+
+    /** Parameter type for decimal numbers. */
+    public static final String TYPE_NUMBER = "number";
 }

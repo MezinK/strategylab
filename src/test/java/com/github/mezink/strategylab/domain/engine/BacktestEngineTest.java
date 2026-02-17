@@ -1,16 +1,19 @@
 package com.github.mezink.strategylab.domain.engine;
 
 import com.github.mezink.strategylab.domain.model.*;
+import com.github.mezink.strategylab.domain.strategy.BuyAndHoldConfig;
 import com.github.mezink.strategylab.domain.strategy.BuyAndHoldStrategy;
+import com.github.mezink.strategylab.domain.strategy.DcaConfig;
 import com.github.mezink.strategylab.domain.strategy.DcaStrategy;
+import com.github.mezink.strategylab.domain.strategy.MaCrossoverConfig;
 import com.github.mezink.strategylab.domain.strategy.MaCrossoverStrategy;
+import com.github.mezink.strategylab.domain.strategy.StrategyId;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,14 +25,15 @@ class BacktestEngineTest {
     @Test
     void runBuyAndHold() {
         TimeSeries series = createTrendingSeries(100, 100.0, 0.5);
+        BuyAndHoldStrategy strategy = new BuyAndHoldStrategy(new BuyAndHoldConfig());
         BacktestConfig config = new BacktestConfig(
                 TEST_SYMBOL, LocalDate.of(2020, 1, 1), LocalDate.of(2020, 4, 9),
-                BigDecimal.valueOf(10000), "buy_and_hold", Map.of()
+                BigDecimal.valueOf(10000), strategy
         );
 
-        BacktestResult result = engine.run(new BuyAndHoldStrategy(), series, config);
+        BacktestResult result = engine.run(series, config);
 
-        assertEquals("buy_and_hold", result.strategyId());
+        assertEquals(StrategyId.BUY_AND_HOLD, result.strategyId());
         assertEquals(TEST_SYMBOL, result.symbol());
         assertNotNull(result.equityCurve());
         assertNotNull(result.metrics());
@@ -41,13 +45,13 @@ class BacktestEngineTest {
     @Test
     void runDcaComputesTotalContributions() {
         TimeSeries series = createConstantPriceSeries(30, 100.0);
+        DcaStrategy strategy = new DcaStrategy(new DcaConfig(BigDecimal.valueOf(1000), 10));
         BacktestConfig config = new BacktestConfig(
                 TEST_SYMBOL, LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 30),
-                BigDecimal.valueOf(5000), "dca",
-                Map.of("contributionAmount", "1000", "frequencyDays", "10")
+                BigDecimal.valueOf(5000), strategy
         );
 
-        BacktestResult result = engine.run(new DcaStrategy(), series, config);
+        BacktestResult result = engine.run(series, config);
 
         // initial(5000) + 2 DCA contributions (day 10, day 20) * 1000 = 7000
         assertTrue(result.metrics().totalContributions().compareTo(BigDecimal.valueOf(5000)) > 0,
@@ -63,16 +67,16 @@ class BacktestEngineTest {
         for (int i = 0; i < 30; i++) prices.add(20.0 + i * 2);
 
         TimeSeries series = createSeriesFromPrices(prices);
+        MaCrossoverStrategy strategy = new MaCrossoverStrategy(new MaCrossoverConfig(5, 15));
         BacktestConfig config = new BacktestConfig(
                 TEST_SYMBOL, LocalDate.of(2020, 1, 1), LocalDate.of(2020, 4, 1),
-                BigDecimal.valueOf(10000), "ma_crossover",
-                Map.of("shortWindow", "5", "longWindow", "15")
+                BigDecimal.valueOf(10000), strategy
         );
 
-        BacktestResult result = engine.run(new MaCrossoverStrategy(), series, config);
+        BacktestResult result = engine.run(series, config);
 
         assertNotNull(result.metrics());
-        assertTrue(result.trades().size() > 0, "MA crossover should produce trades");
+        assertFalse(result.trades().isEmpty(), "MA crossover should produce trades");
         assertEquals(BigDecimal.valueOf(10000), result.metrics().totalContributions());
     }
 

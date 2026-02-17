@@ -1,29 +1,30 @@
 package com.github.mezink.strategylab.application;
 
-import com.github.mezink.strategylab.domain.strategy.Strategy;
+import com.github.mezink.strategylab.domain.strategy.StrategyId;
 import com.github.mezink.strategylab.domain.strategy.StrategyParameterDescriptor;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Use case: list available strategies and their parameter descriptors.
+ * Reads static metadata from the {@link StrategyId} enum.
  */
 public class ListStrategiesUseCase {
 
-    private final List<Strategy> strategies;
-
-    public ListStrategiesUseCase(List<Strategy> strategies) {
-        this.strategies = strategies;
-    }
-
     public List<StrategyInfo> execute() {
-        return strategies.stream()
-                .map(s -> new StrategyInfo(s.id(), s.displayName(), s.description(), s.parameterDescriptors()))
+        return Arrays.stream(StrategyId.values())
+                .map(id -> new StrategyInfo(
+                        id,
+                        id.displayName(),
+                        id.description(),
+                        id.parameterDescriptors()
+                ))
                 .toList();
     }
 
     public record StrategyInfo(
-            String id,
+            StrategyId id,
             String displayName,
             String description,
             List<StrategyParameterDescriptor> parameters

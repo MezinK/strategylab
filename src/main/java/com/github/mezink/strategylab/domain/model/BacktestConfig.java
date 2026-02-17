@@ -1,18 +1,20 @@
 package com.github.mezink.strategylab.domain.model;
 
+import com.github.mezink.strategylab.domain.strategy.Strategy;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
  * Configuration for a single backtest run.
+ * The Strategy carries both its identifier and typed configuration.
  */
 public record BacktestConfig(
         String symbol,
         LocalDate startDate,
         LocalDate endDate,
         BigDecimal initialCapital,
-        String strategyId,
-        java.util.Map<String, String> strategyParams
+        Strategy strategy
 ) {
     public BacktestConfig {
         if (symbol == null || symbol.isBlank()) throw new IllegalArgumentException("symbol required");
@@ -21,11 +23,6 @@ public record BacktestConfig(
         if (initialCapital == null || initialCapital.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("initialCapital must be positive");
         }
-        if (strategyId == null || strategyId.isBlank()) throw new IllegalArgumentException("strategyId required");
-        if (strategyParams == null) {
-            strategyParams = java.util.Map.of();
-        } else {
-            strategyParams = java.util.Map.copyOf(strategyParams);
-        }
+        if (strategy == null) throw new IllegalArgumentException("strategy required");
     }
 }

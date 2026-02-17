@@ -4,6 +4,7 @@ import com.github.mezink.strategylab.domain.model.BacktestMetrics;
 import com.github.mezink.strategylab.domain.model.BacktestResult;
 import com.github.mezink.strategylab.domain.model.EquityPoint;
 import com.github.mezink.strategylab.domain.model.Trade;
+import com.github.mezink.strategylab.domain.strategy.StrategyId;
 
 import java.util.List;
 
@@ -11,7 +12,7 @@ import java.util.List;
  * Response DTO for a single backtest result.
  */
 public record BacktestResultDto(
-        String strategyId,
+        StrategyId strategyId,
         String symbol,
         List<EquityPoint> equityCurve,
         List<Trade> trades,
