@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: pm3-claude
