@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.springframework.web.client.HttpClientErrorException;
+
 /**
  * Yahoo Finance market data provider using the v8 chart API.
  * Fetches daily candles via HTTP and parses the JSON response.
@@ -45,11 +47,7 @@ public class YahooFinanceMarketDataProvider implements MarketDataProvider {
         long period1 = start.atStartOfDay(ZoneOffset.UTC).toEpochSecond();
         long period2 = end.plusDays(1).atStartOfDay(ZoneOffset.UTC).toEpochSecond();
 
-        String json = fetchWithRetry(
-                "/v8/finance/chart/{symbol}?period1={p1}&period2={p2}&interval=1d",
-                symbol, period1, period2, 3
-        );
-
+        String json = fetchData(symbol, period1, period2);
         return parseChartResponse(symbol, json);
     }
 
@@ -62,10 +60,7 @@ public class YahooFinanceMarketDataProvider implements MarketDataProvider {
             long period1 = start.atStartOfDay(ZoneOffset.UTC).toEpochSecond();
             long period2 = end.plusDays(1).atStartOfDay(ZoneOffset.UTC).toEpochSecond();
 
-            String json = fetchWithRetry(
-                    "/v8/finance/chart/{symbol}?period1={p1}&period2={p2}&interval=1d",
-                    symbol, period1, period2, 2
-            );
+            String json = fetchData(symbol, period1, period2);
 
             JsonNode root = objectMapper.readTree(json);
             JsonNode result = root.path("chart").path("result");
@@ -85,28 +80,18 @@ public class YahooFinanceMarketDataProvider implements MarketDataProvider {
         }
     }
 
-    private String fetchWithRetry(String uriTemplate, String symbol, long period1, long period2, int maxAttempts) {
-        int attempt = 0;
-        while (true) {
-            try {
-                attempt++;
-                return restClient.get()
-                        .uri(uriTemplate, symbol, period1, period2)
-                        .retrieve()
-                        .body(String.class);
-            } catch (Exception e) {
-                if (attempt >= maxAttempts) {
-                    throw new MarketDataFetchException(
-                            "Failed to fetch data for %s after %d attempts: %s".formatted(symbol, maxAttempts, e.getMessage()), e);
-                }
-                LOG.warn("Attempt {}/{} failed for {}: {}. Retrying...", attempt, maxAttempts, symbol, e.getMessage());
-                try {
-                    Thread.sleep((long) Math.pow(2, attempt) * 500);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new MarketDataFetchException("Interrupted during retry", ie);
-                }
-            }
+    private String fetchData(String symbol, long period1, long period2) {
+        try {
+            return restClient.get()
+                    .uri("/v8/finance/chart/{symbol}?period1={p1}&period2={p2}&interval=1d", symbol, period1, period2)
+                    .retrieve()
+                    .body(String.class);
+        } catch (HttpClientErrorException e) {
+            throw new MarketDataFetchException(
+                    "Symbol '%s' not found (HTTP %d)".formatted(symbol, e.getStatusCode().value()), e);
+        } catch (Exception e) {
+            throw new MarketDataFetchException(
+                    "Failed to fetch data for %s: %s".formatted(symbol, e.getMessage()), e);
         }
     }
 

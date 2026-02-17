@@ -179,7 +179,7 @@ function renderChart(results, inputs) {
   canvas.height = h * dpr;
   canvas.style.width = w + "px";
   canvas.style.height = h + "px";
-  ctx.scale(dpr, dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   // build series
   const series = results.map((r, i) => ({
@@ -200,7 +200,7 @@ function renderChart(results, inputs) {
   let maxVal = Math.max(...allVals) * 1.05;
   if (minVal === maxVal) { minVal -= 100; maxVal += 100; }
 
-  const pad = { top: 12, right: 16, bottom: 36, left: 70 };
+  const pad = { top: 12, right: 16, bottom: 36, left: 85 };
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top - pad.bottom;
 
