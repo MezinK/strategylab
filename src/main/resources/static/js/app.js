@@ -181,11 +181,13 @@ function renderChart(results, inputs) {
   canvas.style.height = h + "px";
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  // build series
+  const toTime = d => new Date(d + "T00:00:00").getTime();
+
+  // build series with timestamp for each point
   const series = results.map((r, i) => ({
     label: `${inputs[i].symbol} \u2014 ${strategyLabel(r.strategyId)}`,
     color: getColor(i),
-    points: r.equityCurve.map(p => ({ date: p.date, value: parseFloat(p.portfolioValue) }))
+    points: r.equityCurve.map(p => ({ date: p.date, time: toTime(p.date), value: parseFloat(p.portfolioValue) }))
   }));
 
   // legend
@@ -194,18 +196,23 @@ function renderChart(results, inputs) {
     `<div class="legend-item"><span class="legend-swatch" style="background:${s.color}"></span>${s.label}</div>`
   ).join("");
 
-  // compute bounds
+  // compute value bounds
   let allVals = series.flatMap(s => s.points.map(p => p.value));
   let minVal = Math.min(...allVals) * 0.95;
   let maxVal = Math.max(...allVals) * 1.05;
   if (minVal === maxVal) { minVal -= 100; maxVal += 100; }
 
-  const pad = { top: 12, right: 16, bottom: 36, left: 85 };
+  // compute time bounds across all series
+  let allTimes = series.flatMap(s => s.points.map(p => p.time));
+  const minTime = Math.min(...allTimes);
+  const maxTime = Math.max(...allTimes);
+  const timeRange = maxTime - minTime || 1;
+
+  const pad = { top: 12, right: 50, bottom: 36, left: 85 };
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top - pad.bottom;
 
-  const maxLen = Math.max(...series.map(s => s.points.length));
-  const xScale = i => pad.left + (i / (maxLen - 1)) * cw;
+  const xScale = t => pad.left + ((t - minTime) / timeRange) * cw;
   const yScale = v => pad.top + ch - ((v - minVal) / (maxVal - minVal)) * ch;
 
   // clear
@@ -225,18 +232,19 @@ function renderChart(results, inputs) {
     ctx.fillText(formatCurrency(val), pad.left - 10, y + 4);
   }
 
-  // x-axis labels
-  if (series.length > 0 && series[0].points.length > 0) {
-    const pts = series[0].points;
-    const labelCount = Math.min(6, pts.length);
-    ctx.fillStyle = "#484f58";
-    ctx.textAlign = "center";
-    ctx.font = "10px 'JetBrains Mono'";
-    for (let i = 0; i < labelCount; i++) {
-      const idx = Math.round((i / (labelCount - 1)) * (pts.length - 1));
-      const x = xScale(idx);
-      ctx.fillText(pts[idx].date, x, h - 8);
-    }
+  // x-axis labels — pick evenly spaced times
+  const labelCount = Math.min(6, Math.max(2, series.reduce((m, s) => Math.max(m, s.points.length), 0)));
+  ctx.fillStyle = "#484f58";
+  ctx.font = "10px 'JetBrains Mono'";
+  for (let i = 0; i < labelCount; i++) {
+    const t = minTime + (i / (labelCount - 1)) * timeRange;
+    const x = xScale(t);
+    const d = new Date(t);
+    const label = d.toISOString().slice(0, 10);
+    if (i === 0) ctx.textAlign = "left";
+    else if (i === labelCount - 1) ctx.textAlign = "right";
+    else ctx.textAlign = "center";
+    ctx.fillText(label, x, h - 8);
   }
 
   // draw lines
@@ -246,7 +254,7 @@ function renderChart(results, inputs) {
     ctx.lineWidth = 1.8;
     ctx.lineJoin = "round";
     s.points.forEach((p, i) => {
-      const x = xScale(i);
+      const x = xScale(p.time);
       const y = yScale(p.value);
       if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     });
@@ -254,32 +262,38 @@ function renderChart(results, inputs) {
 
     // subtle fill
     ctx.globalAlpha = 0.04;
-    ctx.lineTo(xScale(s.points.length - 1), pad.top + ch);
-    ctx.lineTo(xScale(0), pad.top + ch);
+    const lastPt = s.points[s.points.length - 1];
+    const firstPt = s.points[0];
+    ctx.lineTo(xScale(lastPt.time), pad.top + ch);
+    ctx.lineTo(xScale(firstPt.time), pad.top + ch);
     ctx.closePath();
     ctx.fillStyle = s.color;
     ctx.fill();
     ctx.globalAlpha = 1;
   });
 
-  // tooltip on hover
+  // tooltip on hover — find nearest date per series
   const tooltip = document.getElementById("chart-tooltip");
   canvas.onmousemove = e => {
     const br = canvas.getBoundingClientRect();
     const mx = e.clientX - br.left;
     const my = e.clientY - br.top;
     if (mx < pad.left || mx > w - pad.right) { tooltip.classList.remove("visible"); return; }
-    const idx = Math.round(((mx - pad.left) / cw) * (maxLen - 1));
-    if (idx < 0 || idx >= maxLen) { tooltip.classList.remove("visible"); return; }
 
-    let html = "";
+    const hoverTime = minTime + ((mx - pad.left) / cw) * timeRange;
+    const hoverDate = new Date(hoverTime).toISOString().slice(0, 10);
+
+    let html = `<div style="color:var(--text-muted);margin-bottom:6px">${hoverDate}</div>`;
+    let hasData = false;
     series.forEach(s => {
-      if (idx < s.points.length) {
-        const p = s.points[idx];
-        if (!html) html += `<div style="color:var(--text-muted);margin-bottom:6px">${p.date}</div>`;
-        html += `<div style="display:flex;justify-content:space-between;gap:16px;color:${s.color}"><span style="opacity:.8">${s.label}</span><span>${formatCurrency(p.value)}</span></div>`;
+      // binary search for nearest point
+      const pt = nearestPoint(s.points, hoverTime);
+      if (pt) {
+        hasData = true;
+        html += `<div style="display:flex;justify-content:space-between;gap:16px;color:${s.color}"><span style="opacity:.8">${s.label}</span><span>${formatCurrency(pt.value)}</span></div>`;
       }
     });
+    if (!hasData) { tooltip.classList.remove("visible"); return; }
     tooltip.innerHTML = html;
     tooltip.classList.add("visible");
     tooltip.style.left = (mx + 24) + "px";
@@ -287,6 +301,22 @@ function renderChart(results, inputs) {
     if (mx > w * 0.65) tooltip.style.left = (mx - tooltip.offsetWidth - 16) + "px";
   };
   canvas.onmouseleave = () => tooltip.classList.remove("visible");
+}
+
+function nearestPoint(points, targetTime) {
+  if (!points.length) return null;
+  let lo = 0, hi = points.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (points[mid].time < targetTime) lo = mid + 1; else hi = mid;
+  }
+  // check lo and lo-1 to find closest
+  if (lo > 0 && Math.abs(points[lo - 1].time - targetTime) < Math.abs(points[lo].time - targetTime)) {
+    lo--;
+  }
+  // only show if within ~3 days of hover position
+  if (Math.abs(points[lo].time - targetTime) > 3 * 86400000) return null;
+  return points[lo];
 }
 
 // ── Metrics cards ──

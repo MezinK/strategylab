@@ -115,8 +115,57 @@ td.reason{font-family:var(--font-ui);color:var(--text-secondary);max-width:260px
 
 /* responsive */
 @media(max-width:768px){
-  .app{padding:16px}
-  .slot-fields{flex-direction:column}
-  .field input,.field select{width:100%}
+  html{font-size:13px}
+  .app{padding:12px 14px 32px}
+
+  /* header */
+  header{gap:8px;margin-bottom:16px;padding-bottom:12px}
+  .logo{font-size:1.15rem}
+  header p{font-size:.75rem}
+
+  /* config panel */
+  .config-panel{padding:14px 12px}
+  .config-panel h2{margin-bottom:12px}
+
+  /* slots — stack vertically, hide color dot */
+  .slot{display:flex;flex-direction:column;gap:8px;padding:12px;padding-right:28px}
+  .slot-color{display:none}
+  .slot-fields{flex-direction:column;gap:10px;width:100%}
+  .field{width:100%}
+  .field input,.field select,.field input.w-sm{width:100%}
+  .slot-remove{top:6px;right:6px}
+
+  /* strategy params — full width, stack */
+  .strategy-params{grid-column:unset;flex-direction:column;gap:10px;padding:10px 12px;width:100%}
+  .strategy-params-label{margin-bottom:2px}
+
+  /* actions */
+  .config-actions{flex-wrap:wrap}
+  .run-status{width:100%;margin-top:4px}
+
+  /* tabs */
+  .tab{padding:8px 14px;font-size:.78rem}
+
+  /* chart */
+  .chart-wrap{padding:12px 8px}
+  .chart-legend{gap:10px;margin-bottom:10px}
+  .legend-item{font-size:.7rem}
+  .chart-tooltip{font-size:.65rem;padding:6px 8px}
+
+  /* metrics */
   .metrics-grid{grid-template-columns:1fr}
+  .metric-card{padding:12px}
+
+  /* trades */
+  .trades-strategy-header{padding:10px 12px;font-size:.72rem}
+  thead th{padding:6px 8px;font-size:.65rem}
+  tbody td{padding:5px 8px;font-size:.7rem}
+  td.reason{max-width:120px}
+}
+
+@media(max-width:380px){
+  .app{padding:8px 10px 24px}
+  .config-panel{padding:10px 8px}
+  .slot{padding:10px 8px;padding-right:24px}
+  .tab{padding:8px 10px;font-size:.72rem}
 }
