@@ -25,12 +25,12 @@ async function loadStrategies() {
     strategies = [
       { id: "BUY_AND_HOLD", displayName: "Buy & Hold", parameters: [] },
       { id: "DCA", displayName: "DCA", parameters: [
-        { name: "contributionAmount", description: "Dollar amount per period", type: "number", defaultValue: "500" },
-        { name: "frequencyDays", description: "Days between contributions", type: "integer", defaultValue: "21" }
+        { name: "contributionAmount", displayName: "Contribution", description: "Dollar amount to invest each period", type: "number", defaultValue: "500" },
+        { name: "frequencyDays", displayName: "Frequency (days)", description: "Trading days between contributions (5=weekly, 21=monthly)", type: "integer", defaultValue: "21" }
       ]},
       { id: "MA_CROSSOVER", displayName: "MA Crossover", parameters: [
-        { name: "shortWindow", description: "Short SMA window", type: "integer", defaultValue: "20" },
-        { name: "longWindow", description: "Long SMA window", type: "integer", defaultValue: "50" }
+        { name: "shortWindow", displayName: "Short Window", description: "Short SMA window (trading days)", type: "integer", defaultValue: "20" },
+        { name: "longWindow", displayName: "Long Window", description: "Long SMA window (trading days)", type: "integer", defaultValue: "50" }
       ]}
     ];
   }
@@ -92,8 +92,8 @@ function renderParams(slot, strategyId) {
   if (!strat || !strat.parameters.length) { container.innerHTML = ""; return; }
   container.innerHTML = `<span class="strategy-params-label">Strategy Params</span>` + strat.parameters.map(p => `
     <div class="field">
-      <label>${p.name}</label>
-      <input type="text" class="w-sm" value="${p.defaultValue || ""}" data-param="${p.name}" placeholder="${p.description || ""}">
+      <label title="${p.description || ""}">${p.displayName || p.name}</label>
+      <input type="text" class="w-sm" value="${p.defaultValue || ""}" data-param="${p.name}" title="${p.description || ""}">
     </div>
   `).join("");
 }

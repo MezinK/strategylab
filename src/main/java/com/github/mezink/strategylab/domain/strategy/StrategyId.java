@@ -24,10 +24,10 @@ public enum StrategyId {
             "Buy a fixed dollar amount every N trading days. No selling. Fractional shares allowed.",
             List.of(
                     new StrategyParameterDescriptor(
-                            "contributionAmount", "Dollar amount to invest each period",
+                            "contributionAmount", "Contribution amount", "Dollar amount to invest each period",
                             StrategyParameterDescriptor.TYPE_NUMBER, "500"),
                     new StrategyParameterDescriptor(
-                            "frequencyDays", "Trading days between contributions (5=weekly, 21=monthly)",
+                            "frequencyDays", "Frequency in days", "Trading days between contributions (5=weekly, 21=monthly)",
                             StrategyParameterDescriptor.TYPE_INTEGER, "21")
             )
     ),
@@ -36,10 +36,10 @@ public enum StrategyId {
             "Fully invested when short SMA > long SMA; fully in cash otherwise. Trades only on signal changes.",
             List.of(
                     new StrategyParameterDescriptor(
-                            "shortWindow", "Short SMA window (trading days)",
+                            "shortWindow", "Short window", "Short SMA window (trading days)",
                             StrategyParameterDescriptor.TYPE_INTEGER, "20"),
                     new StrategyParameterDescriptor(
-                            "longWindow", "Long SMA window (trading days)",
+                            "longWindow", "Long window", "Long SMA window (trading days)",
                             StrategyParameterDescriptor.TYPE_INTEGER, "50")
             )
     );
