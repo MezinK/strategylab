@@ -5,6 +5,7 @@ package com.github.mezink.strategylab.domain.strategy;
  */
 public record StrategyParameterDescriptor(
         String name,
+        String displayName,
         String description,
         String type,
         String defaultValue

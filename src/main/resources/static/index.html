@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrategyLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Strategy<span>Lab</span></div>
+    <p>Backtesting Platform</p>
+  </header>
+
+  <section class="config-panel">
+    <h2>Backtest Configuration</h2>
+    <div class="backtest-slots" id="slots"></div>
+    <div class="config-actions">
+      <button class="btn btn-ghost" id="add-slot" type="button">+ Add Strategy</button>
+      <button class="btn btn-primary" id="run-btn" type="button">Run Backtest</button>
+      <span class="run-status" id="run-status"></span>
+    </div>
+  </section>
+
+  <section class="results" id="results">
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="chart">Equity Curve</div>
+      <div class="tab" data-tab="metrics">Metrics</div>
+      <div class="tab" data-tab="trades">Trades</div>
+    </div>
+    <div class="tab-content active" id="tab-chart">
+      <div class="chart-wrap">
+        <div class="chart-legend" id="chart-legend"></div>
+        <canvas id="equity-chart" height="380"></canvas>
+        <div class="chart-tooltip" id="chart-tooltip"></div>
+      </div>
+    </div>
+    <div class="tab-content" id="tab-metrics">
+      <div class="metrics-grid" id="metrics-grid"></div>
+    </div>
+    <div class="tab-content" id="tab-trades">
+      <div class="trades-section" id="trades-section"></div>
+    </div>
+  </section>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

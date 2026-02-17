@@ -6,6 +6,7 @@ import com.github.mezink.strategylab.domain.model.Instrument;
 import com.github.mezink.strategylab.domain.model.TimeSeries;
 import com.github.mezink.strategylab.domain.model.Trade;
 import com.github.mezink.strategylab.domain.model.TradeAction;
+import com.github.mezink.strategylab.domain.strategy.config.BuyAndHoldConfig;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

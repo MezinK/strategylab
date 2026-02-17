@@ -1,6 +1,8 @@
 package com.github.mezink.strategylab.domain.strategy;
 
 import com.github.mezink.strategylab.domain.model.Candle;
+import com.github.mezink.strategylab.domain.strategy.config.BuyAndHoldConfig;
+import com.github.mezink.strategylab.domain.strategy.config.StrategyConfig;
 import com.github.mezink.strategylab.domain.model.EquityPoint;
 import com.github.mezink.strategylab.domain.model.TimeSeries;
 import com.github.mezink.strategylab.domain.model.Trade;

@@ -1,6 +1,7 @@
 package com.github.mezink.strategylab.domain.strategy;
 
 import com.github.mezink.strategylab.domain.model.TimeSeries;
+import com.github.mezink.strategylab.domain.strategy.config.StrategyConfig;
 
 import java.math.BigDecimal;
 

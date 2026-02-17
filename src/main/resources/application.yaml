@@ -1,3 +1,6 @@
 spring:
   application:
-    name: pm3-claude
+    name: strategy-lab
+  threads:
+    virtual:
+      enabled: true

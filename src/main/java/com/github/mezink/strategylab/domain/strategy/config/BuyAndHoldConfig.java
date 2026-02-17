@@ -1,4 +1,4 @@
-package com.github.mezink.strategylab.domain.strategy;
+package com.github.mezink.strategylab.domain.strategy.config;
 
 import java.math.BigDecimal;
 

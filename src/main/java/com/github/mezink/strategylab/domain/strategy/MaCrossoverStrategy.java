@@ -1,6 +1,8 @@
 package com.github.mezink.strategylab.domain.strategy;
 
 import com.github.mezink.strategylab.domain.engine.SmaCalculator;
+import com.github.mezink.strategylab.domain.strategy.config.MaCrossoverConfig;
+import com.github.mezink.strategylab.domain.strategy.config.StrategyConfig;
 import com.github.mezink.strategylab.domain.model.Candle;
 import com.github.mezink.strategylab.domain.model.EquityPoint;
 import com.github.mezink.strategylab.domain.model.TimeSeries;

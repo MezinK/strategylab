@@ -1,11 +1,11 @@
 package com.github.mezink.strategylab.domain.engine;
 
 import com.github.mezink.strategylab.domain.model.*;
-import com.github.mezink.strategylab.domain.strategy.BuyAndHoldConfig;
+import com.github.mezink.strategylab.domain.strategy.config.BuyAndHoldConfig;
 import com.github.mezink.strategylab.domain.strategy.BuyAndHoldStrategy;
-import com.github.mezink.strategylab.domain.strategy.DcaConfig;
+import com.github.mezink.strategylab.domain.strategy.config.DcaConfig;
 import com.github.mezink.strategylab.domain.strategy.DcaStrategy;
-import com.github.mezink.strategylab.domain.strategy.MaCrossoverConfig;
+import com.github.mezink.strategylab.domain.strategy.config.MaCrossoverConfig;
 import com.github.mezink.strategylab.domain.strategy.MaCrossoverStrategy;
 import com.github.mezink.strategylab.domain.strategy.StrategyId;
 import org.junit.jupiter.api.Test;

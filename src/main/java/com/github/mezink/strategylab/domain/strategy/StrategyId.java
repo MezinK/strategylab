@@ -1,5 +1,9 @@
 package com.github.mezink.strategylab.domain.strategy;
 
+import com.github.mezink.strategylab.domain.strategy.config.BuyAndHoldConfig;
+import com.github.mezink.strategylab.domain.strategy.config.DcaConfig;
+import com.github.mezink.strategylab.domain.strategy.config.MaCrossoverConfig;
+
 import java.util.List;
 import java.util.Map;
 
