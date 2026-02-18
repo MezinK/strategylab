@@ -131,12 +131,34 @@ class MetricsCalculatorTest {
         BacktestMetrics metrics = MetricsCalculator.compute(curve, bd(10000), 1);
 
         assertNotNull(metrics.finalValue());
+        assertNotNull(metrics.totalReturnPct());
         assertNotNull(metrics.cagr());
         assertNotNull(metrics.maxDrawdown());
         assertNotNull(metrics.annualizedVolatility());
         assertNotNull(metrics.sharpeRatio());
         assertEquals(1, metrics.numberOfTrades());
         assertEquals(0, bd(10000).compareTo(metrics.totalContributions()));
+    }
+
+    @Test
+    void totalReturnPctComputedCorrectly() {
+        List<EquityPoint> curve = List.of(
+                new EquityPoint(LocalDate.of(2020, 1, 1), bd(10000)),
+                new EquityPoint(LocalDate.of(2021, 1, 1), bd(12000))
+        );
+        // With DCA contributions totaling $15000, return = (12000-15000)/15000 = -20%
+        BacktestMetrics metrics = MetricsCalculator.compute(curve, bd(15000), 5);
+        assertEquals(-0.2, metrics.totalReturnPct().doubleValue(), 0.001);
+    }
+
+    @Test
+    void totalReturnPctPositiveForProfit() {
+        List<EquityPoint> curve = List.of(
+                new EquityPoint(LocalDate.of(2020, 1, 1), bd(10000)),
+                new EquityPoint(LocalDate.of(2021, 1, 1), bd(12000))
+        );
+        BacktestMetrics metrics = MetricsCalculator.compute(curve, bd(10000), 1);
+        assertEquals(0.2, metrics.totalReturnPct().doubleValue(), 0.001);
     }
 
     @Test

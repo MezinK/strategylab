@@ -31,6 +31,14 @@ public final class MetricsCalculator {
         }
 
         BigDecimal finalValue = equityCurve.getLast().portfolioValue();
+
+        BigDecimal totalReturnPct = BigDecimal.ZERO;
+        if (totalContributions.compareTo(BigDecimal.ZERO) > 0) {
+            totalReturnPct = finalValue.subtract(totalContributions)
+                    .divide(totalContributions, MC)
+                    .setScale(6, RoundingMode.HALF_UP);
+        }
+
         BigDecimal cagr = computeCAGR(equityCurve);
         BigDecimal maxDrawdown = computeMaxDrawdown(equityCurve);
         List<Double> dailyReturns = computeDailyReturns(equityCurve);
@@ -40,6 +48,7 @@ public final class MetricsCalculator {
         return new BacktestMetrics(
                 finalValue,
                 totalContributions,
+                totalReturnPct,
                 cagr,
                 maxDrawdown,
                 volatility,
