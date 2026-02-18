@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public record BacktestMetrics(
         BigDecimal finalValue,
         BigDecimal totalContributions,
+        BigDecimal netReturnPercent,
         BigDecimal cagr,
         BigDecimal maxDrawdown,
         BigDecimal annualizedVolatility,

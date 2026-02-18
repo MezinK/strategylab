@@ -67,15 +67,55 @@ class MetricsCalculatorTest {
                 new EquityPoint(LocalDate.of(2020, 1, 4), bd(105)),
                 new EquityPoint(LocalDate.of(2020, 1, 5), bd(101))
         );
-        BigDecimal vol = MetricsCalculator.computeAnnualizedVolatility(curve);
+        BigDecimal vol = MetricsCalculator.annualizedVolatilityFrom(
+                MetricsCalculator.computeDailyReturns(curve));
         assertTrue(vol.doubleValue() >= 0, "Volatility should be non-negative");
         assertTrue(vol.doubleValue() > 0, "Volatility for varying prices should be positive");
     }
 
     @Test
-    void sharpeIsZeroWhenVolatilityIsZero() {
-        BigDecimal sharpe = MetricsCalculator.computeSharpe(bd(0.10), bd(0));
-        assertEquals(0, bd(0).compareTo(sharpe));
+    void sharpeIsZeroWhenReturnsAreConstant() {
+        // When all daily returns are the same, stddev = 0, so Sharpe should be 0.
+        // Use powers of 2 so that each return is exactly 1.0 (100%) in floating point.
+        List<EquityPoint> curve = List.of(
+                new EquityPoint(LocalDate.of(2020, 1, 1), bd(100)),
+                new EquityPoint(LocalDate.of(2020, 1, 2), bd(200)),
+                new EquityPoint(LocalDate.of(2020, 1, 3), bd(400)),
+                new EquityPoint(LocalDate.of(2020, 1, 4), bd(800))
+        );
+        List<Double> returns = MetricsCalculator.computeDailyReturns(curve);
+        BigDecimal sharpe = MetricsCalculator.sharpeFrom(returns);
+        assertEquals(0, bd(0).compareTo(sharpe),
+                "Sharpe should be 0 when all returns are identical (zero vol), got: " + sharpe);
+    }
+
+    @Test
+    void sharpeUsesArithmeticMeanReturn() {
+        // Build a curve with known daily returns that produce different CAGR vs arithmetic mean
+        List<EquityPoint> curve = new ArrayList<>();
+        LocalDate date = LocalDate.of(2020, 1, 1);
+        // Volatile path: up 10%, down 10%, up 10%, down 10%, ...
+        double value = 10000;
+        curve.add(new EquityPoint(date, bd(value)));
+        for (int i = 1; i <= 252; i++) {
+            value = (i % 2 == 1) ? value * 1.02 : value * 0.98;
+            curve.add(new EquityPoint(date.plusDays(i), bd(value)));
+        }
+
+        List<Double> returns = MetricsCalculator.computeDailyReturns(curve);
+        BigDecimal newSharpe = MetricsCalculator.sharpeFrom(returns);
+
+        // Old method: CAGR / volatility (geometric / arithmetic mix)
+        BigDecimal cagr = MetricsCalculator.computeCAGR(curve);
+        BigDecimal vol = MetricsCalculator.annualizedVolatilityFrom(returns);
+        BigDecimal oldSharpe = (vol.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO
+                : cagr.divide(vol, new java.math.MathContext(16, java.math.RoundingMode.HALF_UP))
+                .setScale(6, java.math.RoundingMode.HALF_UP);
+
+        // The new Sharpe (arithmetic mean / vol) should differ from old (CAGR / vol)
+        assertNotEquals(0, newSharpe.compareTo(oldSharpe),
+                "New Sharpe (arithmetic) should differ from old Sharpe (CAGR-based). " +
+                        "New: " + newSharpe + ", Old: " + oldSharpe);
     }
 
     @Test
@@ -91,12 +131,34 @@ class MetricsCalculatorTest {
         BacktestMetrics metrics = MetricsCalculator.compute(curve, bd(10000), 1);
 
         assertNotNull(metrics.finalValue());
+        assertNotNull(metrics.netReturnPercent());
         assertNotNull(metrics.cagr());
         assertNotNull(metrics.maxDrawdown());
         assertNotNull(metrics.annualizedVolatility());
         assertNotNull(metrics.sharpeRatio());
         assertEquals(1, metrics.numberOfTrades());
         assertEquals(0, bd(10000).compareTo(metrics.totalContributions()));
+    }
+
+    @Test
+    void netReturnPercentComputedCorrectly() {
+        List<EquityPoint> curve = List.of(
+                new EquityPoint(LocalDate.of(2020, 1, 1), bd(10000)),
+                new EquityPoint(LocalDate.of(2021, 1, 1), bd(12000))
+        );
+        // With DCA contributions totaling $15000, return = (12000-15000)/15000 = -20%
+        BacktestMetrics metrics = MetricsCalculator.compute(curve, bd(15000), 5);
+        assertEquals(-0.2, metrics.netReturnPercent().doubleValue(), 0.001);
+    }
+
+    @Test
+    void netReturnPercentPositiveForProfit() {
+        List<EquityPoint> curve = List.of(
+                new EquityPoint(LocalDate.of(2020, 1, 1), bd(10000)),
+                new EquityPoint(LocalDate.of(2021, 1, 1), bd(12000))
+        );
+        BacktestMetrics metrics = MetricsCalculator.compute(curve, bd(10000), 1);
+        assertEquals(0.2, metrics.netReturnPercent().doubleValue(), 0.001);
     }
 
     @Test

@@ -20,6 +20,7 @@ public record BacktestConfig(
         if (symbol == null || symbol.isBlank()) throw new IllegalArgumentException("symbol required");
         if (startDate == null) throw new IllegalArgumentException("startDate required");
         if (endDate == null) throw new IllegalArgumentException("endDate required");
+        if (!startDate.isBefore(endDate)) throw new IllegalArgumentException("startDate must be before endDate");
         if (initialCapital == null || initialCapital.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("initialCapital must be positive");
         }

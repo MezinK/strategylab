@@ -1,6 +1,6 @@
 "use strict";
 
-const BASE_COLORS = ["#58a6ff","#f0883e","#f778ba","#7ee787","#d2a8ff"];
+const BASE_COLORS = ["#60a5fa","#f59e0b","#ec4899","#34d399","#a78bfa"];
 
 function getColor(i) {
   if (i < BASE_COLORS.length) return BASE_COLORS[i];
@@ -34,7 +34,6 @@ async function loadStrategies() {
       ]}
     ];
   }
-  addSlot();
 }
 
 // ── Slot management ──
@@ -57,7 +56,7 @@ function addSlot() {
       <div class="field">
         <label>Strategy</label>
         <select data-field="strategyId">
-          ${strategies.map(s => `<option value="${s.id}">${s.displayName}</option>`).join("")}
+          ${strategies.map(s => `<option value="${esc(s.id)}">${esc(s.displayName)}</option>`).join("")}
         </select>
       </div>
       <div class="field">
@@ -74,7 +73,7 @@ function addSlot() {
       </div>
     </div>
     <div class="strategy-params" data-params></div>
-    ${idx > 0 ? `<button class="slot-remove" type="button" title="Remove">&times;</button>` : ""}
+    ${`<button class="slot-remove" type="button" title="Remove">&times;</button>`}
   `;
   document.getElementById("slots").appendChild(div);
 
@@ -92,8 +91,8 @@ function renderParams(slot, strategyId) {
   if (!strat || !strat.parameters.length) { container.innerHTML = ""; return; }
   container.innerHTML = `<span class="strategy-params-label">Strategy Params</span>` + strat.parameters.map(p => `
     <div class="field">
-      <label title="${p.description || ""}">${p.displayName || p.name}</label>
-      <input type="text" class="w-sm" value="${p.defaultValue || ""}" data-param="${p.name}" title="${p.description || ""}">
+      <label title="${esc(p.description || "")}">${esc(p.displayName || p.name)}</label>
+      <input type="text" class="w-sm" value="${esc(p.defaultValue || "")}" data-param="${esc(p.name)}" title="${esc(p.description || "")}">
     </div>
   `).join("");
 }
@@ -193,19 +192,19 @@ function renderChart(results, inputs) {
   // legend
   const legend = document.getElementById("chart-legend");
   legend.innerHTML = series.map(s =>
-    `<div class="legend-item"><span class="legend-swatch" style="background:${s.color}"></span>${s.label}</div>`
+    `<div class="legend-item"><span class="legend-swatch" style="background:${s.color}"></span>${esc(s.label)}</div>`
   ).join("");
 
   // compute value bounds
   let allVals = series.flatMap(s => s.points.map(p => p.value));
-  let minVal = Math.min(...allVals) * 0.95;
-  let maxVal = Math.max(...allVals) * 1.05;
+  let minVal = allVals.reduce((a, b) => a < b ? a : b, Infinity) * 0.95;
+  let maxVal = allVals.reduce((a, b) => a > b ? a : b, -Infinity) * 1.05;
   if (minVal === maxVal) { minVal -= 100; maxVal += 100; }
 
   // compute time bounds across all series
   let allTimes = series.flatMap(s => s.points.map(p => p.time));
-  const minTime = Math.min(...allTimes);
-  const maxTime = Math.max(...allTimes);
+  const minTime = allTimes.reduce((a, b) => a < b ? a : b, Infinity);
+  const maxTime = allTimes.reduce((a, b) => a > b ? a : b, -Infinity);
   const timeRange = maxTime - minTime || 1;
 
   const pad = { top: 12, right: 50, bottom: 36, left: 85 };
@@ -219,23 +218,23 @@ function renderChart(results, inputs) {
   ctx.clearRect(0, 0, w, h);
 
   // grid
-  ctx.strokeStyle = "#21262d";
+  ctx.strokeStyle = "#1e1e21";
   ctx.lineWidth = 1;
   const gridLines = 5;
   for (let i = 0; i <= gridLines; i++) {
     const y = pad.top + (i / gridLines) * ch;
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
     const val = maxVal - (i / gridLines) * (maxVal - minVal);
-    ctx.fillStyle = "#484f58";
-    ctx.font = "11px 'JetBrains Mono'";
+    ctx.fillStyle = "#52525b";
+    ctx.font = "11px 'IBM Plex Mono'";
     ctx.textAlign = "right";
     ctx.fillText(formatCurrency(val), pad.left - 10, y + 4);
   }
 
   // x-axis labels — pick evenly spaced times
   const labelCount = Math.min(6, Math.max(2, series.reduce((m, s) => Math.max(m, s.points.length), 0)));
-  ctx.fillStyle = "#484f58";
-  ctx.font = "10px 'JetBrains Mono'";
+  ctx.fillStyle = "#52525b";
+  ctx.font = "10px 'IBM Plex Mono'";
   for (let i = 0; i < labelCount; i++) {
     const t = minTime + (i / (labelCount - 1)) * timeRange;
     const x = xScale(t);
@@ -290,7 +289,7 @@ function renderChart(results, inputs) {
       const pt = nearestPoint(s.points, hoverTime);
       if (pt) {
         hasData = true;
-        html += `<div style="display:flex;justify-content:space-between;gap:16px;color:${s.color}"><span style="opacity:.8">${s.label}</span><span>${formatCurrency(pt.value)}</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;gap:16px;color:${s.color}"><span style="opacity:.8">${esc(s.label)}</span><span>${formatCurrency(pt.value)}</span></div>`;
       }
     });
     if (!hasData) { tooltip.classList.remove("visible"); return; }
@@ -327,7 +326,7 @@ function renderMetrics(results, inputs) {
     const color = getColor(i);
     const label = `${inputs[i].symbol} \u2014 ${strategyLabel(r.strategyId)}`;
     return `<div class="metric-card">
-      <h3><span class="dot" style="background:${color}"></span>${label}</h3>
+      <h3><span class="dot" style="background:${color}"></span>${esc(label)}</h3>
       <div class="metric-rows">
         ${metricRow("Final Value", formatCurrency(m.finalValue), parseFloat(m.finalValue) >= parseFloat(m.totalContributions))}
         ${metricRow("Total Contributed", formatCurrency(m.totalContributions))}
@@ -357,11 +356,11 @@ function renderTrades(results, inputs) {
     const label = `${inputs[i].symbol} \u2014 ${strategyLabel(r.strategyId)}`;
     if (!r.trades.length) return `
       <div class="trades-strategy collapsed">
-        <div class="trades-strategy-header"><span class="dot" style="background:${color}"></span>${label}<span class="chevron">&#9660;</span></div>
+        <div class="trades-strategy-header"><span class="dot" style="background:${color}"></span>${esc(label)}<span class="chevron">&#9660;</span></div>
         <div class="trades-body" style="padding:16px 18px;color:var(--text-muted);font-size:.82rem">No trades recorded.</div>
       </div>`;
     return `<div class="trades-strategy collapsed">
-      <div class="trades-strategy-header"><span class="dot" style="background:${color}"></span>${label} &mdash; ${r.trades.length} trade(s)<span class="chevron">&#9660;</span></div>
+      <div class="trades-strategy-header"><span class="dot" style="background:${color}"></span>${esc(label)} &mdash; ${r.trades.length} trade(s)<span class="chevron">&#9660;</span></div>
       <div class="trades-body" style="overflow-x:auto">
       <table>
         <thead><tr><th>Date</th><th>Action</th><th>Qty</th><th>Price</th><th>Reason</th></tr></thead>

@@ -16,6 +16,9 @@ public record Candle(
 ) {
     public Candle {
         if (date == null) throw new IllegalArgumentException("date must not be null");
+        if (open == null) throw new IllegalArgumentException("open must not be null");
+        if (high == null) throw new IllegalArgumentException("high must not be null");
+        if (low == null) throw new IllegalArgumentException("low must not be null");
         if (close == null) throw new IllegalArgumentException("close must not be null");
     }
 }

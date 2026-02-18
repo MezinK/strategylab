@@ -18,10 +18,15 @@ RUN ./gradlew bootJar --no-daemon -x test -x sonarlintMain -x sonarlintTest -x p
 FROM eclipse-temurin:25-jre-noble
 WORKDIR /app
 
+RUN groupadd --system appuser && useradd --system --gid appuser appuser
+
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Railway provides PORT env var
-ENV PORT=8080
-EXPOSE ${PORT}
+RUN chown -R appuser:appuser /app
+USER appuser
 
-ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT}"]
+# Railway sets PORT env var; Spring reads SERVER_PORT automatically
+ENV SERVER_PORT=8080
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
