@@ -32,9 +32,9 @@ public final class MetricsCalculator {
 
         BigDecimal finalValue = equityCurve.getLast().portfolioValue();
 
-        BigDecimal totalReturnPct = BigDecimal.ZERO;
+        BigDecimal netReturnPct = BigDecimal.ZERO;
         if (totalContributions.compareTo(BigDecimal.ZERO) > 0) {
-            totalReturnPct = finalValue.subtract(totalContributions)
+            netReturnPct = finalValue.subtract(totalContributions)
                     .divide(totalContributions, MC)
                     .setScale(6, RoundingMode.HALF_UP);
         }
@@ -48,7 +48,7 @@ public final class MetricsCalculator {
         return new BacktestMetrics(
                 finalValue,
                 totalContributions,
-                totalReturnPct,
+                netReturnPct,
                 cagr,
                 maxDrawdown,
                 volatility,
