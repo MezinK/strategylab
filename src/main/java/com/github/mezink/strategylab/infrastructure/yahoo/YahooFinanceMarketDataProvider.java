@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import com.github.mezink.strategylab.domain.exception.MarketDataFetchException;
 import org.springframework.web.client.HttpClientErrorException;
 
 /**

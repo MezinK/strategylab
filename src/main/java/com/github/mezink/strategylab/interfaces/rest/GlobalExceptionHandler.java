@@ -1,6 +1,6 @@
 package com.github.mezink.strategylab.interfaces.rest;
 
-import com.github.mezink.strategylab.infrastructure.yahoo.MarketDataFetchException;
+import com.github.mezink.strategylab.domain.exception.MarketDataFetchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
