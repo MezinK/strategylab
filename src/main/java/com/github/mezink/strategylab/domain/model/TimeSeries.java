@@ -1,12 +1,13 @@
 package com.github.mezink.strategylab.domain.model;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * An ordered list of daily candles for a given instrument.
- * Candles are expected to be sorted by date ascending.
+ * Candles are sorted by date ascending (enforced in constructor).
  */
 public record TimeSeries(
         Instrument instrument,
@@ -17,12 +18,9 @@ public record TimeSeries(
         if (candles == null || candles.isEmpty()) {
             throw new IllegalArgumentException("candles must not be null or empty");
         }
-        for (int i = 1; i < candles.size(); i++) {
-            if (candles.get(i).date().isBefore(candles.get(i - 1).date())) {
-                throw new IllegalArgumentException("candles must be sorted by date ascending");
-            }
-        }
-        candles = List.copyOf(candles);
+        candles = candles.stream()
+                .sorted(Comparator.comparing(Candle::date))
+                .toList();
     }
 
     /**
