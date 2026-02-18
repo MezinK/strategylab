@@ -198,14 +198,14 @@ function renderChart(results, inputs) {
 
   // compute value bounds
   let allVals = series.flatMap(s => s.points.map(p => p.value));
-  let minVal = Math.min(...allVals) * 0.95;
-  let maxVal = Math.max(...allVals) * 1.05;
+  let minVal = allVals.reduce((a, b) => a < b ? a : b, Infinity) * 0.95;
+  let maxVal = allVals.reduce((a, b) => a > b ? a : b, -Infinity) * 1.05;
   if (minVal === maxVal) { minVal -= 100; maxVal += 100; }
 
   // compute time bounds across all series
   let allTimes = series.flatMap(s => s.points.map(p => p.time));
-  const minTime = Math.min(...allTimes);
-  const maxTime = Math.max(...allTimes);
+  const minTime = allTimes.reduce((a, b) => a < b ? a : b, Infinity);
+  const maxTime = allTimes.reduce((a, b) => a > b ? a : b, -Infinity);
   const timeRange = maxTime - minTime || 1;
 
   const pad = { top: 12, right: 50, bottom: 36, left: 85 };
