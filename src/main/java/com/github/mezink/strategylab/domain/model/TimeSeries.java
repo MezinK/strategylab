@@ -17,6 +17,11 @@ public record TimeSeries(
         if (candles == null || candles.isEmpty()) {
             throw new IllegalArgumentException("candles must not be null or empty");
         }
+        for (int i = 1; i < candles.size(); i++) {
+            if (candles.get(i).date().isBefore(candles.get(i - 1).date())) {
+                throw new IllegalArgumentException("candles must be sorted by date ascending");
+            }
+        }
         candles = List.copyOf(candles);
     }
 
