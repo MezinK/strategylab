@@ -34,7 +34,6 @@ async function loadStrategies() {
       ]}
     ];
   }
-  addSlot();
 }
 
 // ── Slot management ──
@@ -74,7 +73,7 @@ function addSlot() {
       </div>
     </div>
     <div class="strategy-params" data-params></div>
-    ${idx > 0 ? `<button class="slot-remove" type="button" title="Remove">&times;</button>` : ""}
+    ${`<button class="slot-remove" type="button" title="Remove">&times;</button>`}
   `;
   document.getElementById("slots").appendChild(div);
 
