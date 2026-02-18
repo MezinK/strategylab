@@ -1,6 +1,6 @@
 "use strict";
 
-const BASE_COLORS = ["#58a6ff","#f0883e","#f778ba","#7ee787","#d2a8ff"];
+const BASE_COLORS = ["#60a5fa","#f59e0b","#ec4899","#34d399","#a78bfa"];
 
 function getColor(i) {
   if (i < BASE_COLORS.length) return BASE_COLORS[i];
@@ -219,23 +219,23 @@ function renderChart(results, inputs) {
   ctx.clearRect(0, 0, w, h);
 
   // grid
-  ctx.strokeStyle = "#21262d";
+  ctx.strokeStyle = "#1e1e21";
   ctx.lineWidth = 1;
   const gridLines = 5;
   for (let i = 0; i <= gridLines; i++) {
     const y = pad.top + (i / gridLines) * ch;
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
     const val = maxVal - (i / gridLines) * (maxVal - minVal);
-    ctx.fillStyle = "#484f58";
-    ctx.font = "11px 'JetBrains Mono'";
+    ctx.fillStyle = "#52525b";
+    ctx.font = "11px 'IBM Plex Mono'";
     ctx.textAlign = "right";
     ctx.fillText(formatCurrency(val), pad.left - 10, y + 4);
   }
 
   // x-axis labels — pick evenly spaced times
   const labelCount = Math.min(6, Math.max(2, series.reduce((m, s) => Math.max(m, s.points.length), 0)));
-  ctx.fillStyle = "#484f58";
-  ctx.font = "10px 'JetBrains Mono'";
+  ctx.fillStyle = "#52525b";
+  ctx.font = "10px 'IBM Plex Mono'";
   for (let i = 0; i < labelCount; i++) {
     const t = minTime + (i / (labelCount - 1)) * timeRange;
     const x = xScale(t);
