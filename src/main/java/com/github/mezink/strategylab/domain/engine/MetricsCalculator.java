@@ -33,8 +33,9 @@ public final class MetricsCalculator {
         BigDecimal finalValue = equityCurve.getLast().portfolioValue();
         BigDecimal cagr = computeCAGR(equityCurve);
         BigDecimal maxDrawdown = computeMaxDrawdown(equityCurve);
-        BigDecimal volatility = computeAnnualizedVolatility(equityCurve);
-        BigDecimal sharpe = computeSharpe(cagr, volatility);
+        List<Double> dailyReturns = computeDailyReturns(equityCurve);
+        BigDecimal volatility = annualizedVolatilityFrom(dailyReturns);
+        BigDecimal sharpe = sharpeFrom(dailyReturns);
 
         return new BacktestMetrics(
                 finalValue,
@@ -90,9 +91,10 @@ public final class MetricsCalculator {
     }
 
     /**
-     * Annualized volatility = stddev(daily returns) * sqrt(252).
+     * Extracts daily simple returns from an equity curve.
+     * Return_i = (value_i - value_{i-1}) / value_{i-1}.
      */
-    static BigDecimal computeAnnualizedVolatility(List<EquityPoint> curve) {
+    static List<Double> computeDailyReturns(List<EquityPoint> curve) {
         List<Double> dailyReturns = new ArrayList<>();
         for (int i = 1; i < curve.size(); i++) {
             double prev = curve.get(i - 1).portfolioValue().doubleValue();
@@ -101,24 +103,45 @@ public final class MetricsCalculator {
                 dailyReturns.add((curr - prev) / prev);
             }
         }
-        if (dailyReturns.isEmpty()) return BigDecimal.ZERO;
+        return dailyReturns;
+    }
 
-        double mean = dailyReturns.stream().mapToDouble(d -> d).average().orElse(0.0);
-        double variance = dailyReturns.stream()
-                .mapToDouble(d -> (d - mean) * (d - mean))
-                .average()
-                .orElse(0.0);
-        double stddev = Math.sqrt(variance);
-        double annualized = stddev * Math.sqrt(252);
+    /**
+     * Annualized volatility = sample_stddev(daily returns) * sqrt(252).
+     * Uses sample variance (N-1) instead of population variance (N).
+     */
+    static BigDecimal annualizedVolatilityFrom(List<Double> dailyReturns) {
+        if (dailyReturns.size() < 2) return BigDecimal.ZERO;
 
+        double annualized = sampleStdDev(dailyReturns) * Math.sqrt(252);
         return BigDecimal.valueOf(annualized).setScale(6, RoundingMode.HALF_UP);
     }
 
     /**
-     * Sharpe ratio (rf = 0) = CAGR / annualized volatility.
+     * Sharpe ratio (rf = 0) = annualized arithmetic mean return / annualized volatility.
+     * = (mean(dailyReturn) * 252) / (stddev(dailyReturn) * sqrt(252))
+     * = mean(dailyReturn) * sqrt(252) / stddev(dailyReturn).
      */
-    static BigDecimal computeSharpe(BigDecimal cagr, BigDecimal volatility) {
-        if (volatility.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
-        return cagr.divide(volatility, MC).setScale(6, RoundingMode.HALF_UP);
+    static BigDecimal sharpeFrom(List<Double> dailyReturns) {
+        if (dailyReturns.size() < 2) return BigDecimal.ZERO;
+
+        double mean = dailyReturns.stream().mapToDouble(d -> d).average().orElse(0.0);
+        double stddev = sampleStdDev(dailyReturns);
+
+        if (stddev == 0.0) return BigDecimal.ZERO;
+
+        double sharpe = mean * Math.sqrt(252) / stddev;
+        return BigDecimal.valueOf(sharpe).setScale(6, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Computes sample standard deviation (N-1 denominator) for the given values.
+     */
+    private static double sampleStdDev(List<Double> values) {
+        double mean = values.stream().mapToDouble(d -> d).average().orElse(0.0);
+        double sumSquares = values.stream()
+                .mapToDouble(d -> (d - mean) * (d - mean))
+                .sum();
+        return Math.sqrt(sumSquares / (values.size() - 1));
     }
 }
