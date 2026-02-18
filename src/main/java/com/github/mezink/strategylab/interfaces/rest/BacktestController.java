@@ -27,6 +27,10 @@ public class BacktestController {
 
     @PostMapping
     public ResponseEntity<BacktestResponse> runBacktest(@RequestBody BacktestRequest request) {
+        if (request.backtests() == null || request.backtests().isEmpty()) {
+            throw new IllegalArgumentException("At least one backtest configuration is required");
+        }
+
         List<BacktestConfig> configs = request.backtests().stream()
                 .map(BacktestRequestItem::toDomainConfig)
                 .toList();
